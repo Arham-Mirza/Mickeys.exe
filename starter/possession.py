@@ -1,12 +1,4 @@
-"""Build a weakly supervised possession candidate from tracking and Smart Tagging.
-
-    python starter/possession.py
-    python evaluation/validate_submission.py evaluation/results/Mickeys.exe.csv
-
-No frame-level training labels are available, so this is an interpretable heuristic, not a trained
-classifier. Tracking is the primary signal. Smart Tagging breaks ties between tracking hypotheses
-and identifies restart intervals; its phases are not treated as ground truth.
-"""
+"""Generate possession labels from tracking and Smart Tagging."""
 
 import argparse
 import os
@@ -61,7 +53,6 @@ def track_team_names(meta_path):
 
 
 def read_tracking(raw_path, team_by_slot, n_frames, pitch):
-    """Return each team's nearest ball distance, ball coordinates, and visible-player counts."""
     length, width = pitch
     distances = np.full((n_frames, 2), np.inf, dtype=np.float32)
     ball = np.full((n_frames, 2), np.nan, dtype=np.float32)
@@ -103,7 +94,6 @@ def read_tracking(raw_path, team_by_slot, n_frames, pitch):
 
 
 def tag_evidence(events, n_frames, team_names):
-    """Build a weak owner hint, giving more weight to phases that imply control."""
     tagged = np.zeros(n_frames, dtype=np.float32)
     home_name, away_name = team_names
     for event in events:
@@ -128,7 +118,6 @@ def tag_evidence(events, n_frames, team_names):
 
 
 def restart_evidence(dead, hint, ball, events, n_frames, pitch, fps):
-    """Use tracked ball motion to locate tagged restarts and their initial team hint."""
     length, width = pitch
     for event in events:
         if (event["code"] or "").strip().upper() != "SET PIECES":
@@ -141,7 +130,6 @@ def restart_evidence(dead, hint, ball, events, n_frames, pitch, fps):
         if end <= start:
             continue
 
-        # A tracked launch is a >1.5 m displacement over seven frames.
         first = max(start + 7, 7)
         found = None
         for frame in range(first, end):
@@ -171,7 +159,6 @@ def centered_mean(values, radius):
 
 
 def proximity_score(distances):
-    """Signed nearest-player evidence, useful for tag consistency checks."""
     home = np.exp(-distances[:, HOME] / 2.5)
     away = np.exp(-distances[:, AWAY] / 2.5)
     score = home - away
@@ -180,7 +167,6 @@ def proximity_score(distances):
 
 
 def possession_observations(distances, max_control_distance=3.5, min_distance_margin=0.5):
-    """Return a team only when a nearby player is clearly closer than the opposing team."""
     nearest = np.argmin(distances, axis=1).astype(np.int8)
     rows = np.arange(len(distances))
     own = distances[rows, nearest]
@@ -196,7 +182,6 @@ def possession_observations(distances, max_control_distance=3.5, min_distance_ma
 
 def track_possession(observations, phase_hint, dead, player_count,
                      direct_confirm=15, phase_confirm=50):
-    """Hold ownership through ambiguous tracking; require sustained evidence to switch teams."""
     labels = np.full(len(observations), "X", dtype="<U1")
     owner = -1
     pending = -1
@@ -299,7 +284,6 @@ def write_submission(path, labels):
 
 
 def denoise_tagging(source_path, output_path, tracking_score, team_names, n_frames, fps):
-    """Remove only confidently contradicted Team tags; preserve all source events and other tags."""
     tree = ET.parse(source_path)
     tracking = centered_mean(tracking_score, 25)
     team_to_side = {team_names[0]: HOME, team_names[1]: AWAY}
