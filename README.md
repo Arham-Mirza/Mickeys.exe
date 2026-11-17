@@ -85,8 +85,24 @@ Once you have the data, regenerate them yourself and go further:
 
 ```bash
 python starter/baseline.py                              # rebuild the four baselines
-python evaluation/validate_submission.py <your>.csv     # before every submission
+python starter/possession.py
+python evaluation/validate_submission.py evaluation/results/Mickeys.exe.csv
+python -m unittest starter.test_possession
 ```
+
+`starter/possession.py` is a compact weak-supervision heuristic, not a trained classifier: no
+external frame-level possession labels are included. It writes the possession CSV and a separate
+`data/tactical/BAR-ATH_tactical_smart_tagging_denoised.xml`, leaving the supplied XML untouched.
+The derived XML preserves every event and removes a `Team` tag only when enough smoothed tracking
+evidence strongly contradicts it; it does not claim that the remaining tags are ground truth. The
+possession heuristic uses Smart Tagging as a weak prior when tracking is ambiguous and uses tagged
+restarts plus out-of-pitch ball positions for stoppage cues. It holds the current team through
+short ambiguous/missing-ball spans and requires sustained evidence before switching teams.
+Synthetic state tests run with `python -m unittest starter.test_possession`. Neither output has been
+shown to improve full-match accuracy; the public sample is for pipeline checks, not tuning. Both
+outputs are ignored by Git.
+
+See [Mickeys.exe.md](Mickeys.exe.md) for the method, limitations, and exact reproduction steps.
 
 **Validate every file before you submit it.** `validate_submission.py` runs exactly the checks the
 official scorer runs, and a file that fails them is dropped from the board with a one-line reason.
