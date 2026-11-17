@@ -1,18 +1,4 @@
-"""Check a submission file before you send it. No ground truth needed.
 
-Run this on every file you are about to submit. It applies exactly the same validation the
-official scorer applies, so a file that passes here will not be rejected there -- and a file that
-fails here would have been silently dropped from the board with a one-line reason nobody would
-have read in time.
-
-    python evaluation/validate_submission.py my_submission.csv
-    python evaluation/validate_submission.py my_submission.csv --rows 199319
-
-On success it also prints what the file actually says -- label counts, how many possessions it
-reports and how long they are. That second half is worth reading. A file can be perfectly valid
-and still claim the match had 900 possessions of 5 seconds each, and the format checker is the
-earliest place you can notice.
-"""
 
 import argparse
 import os
