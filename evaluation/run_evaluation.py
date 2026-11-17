@@ -1,30 +1,4 @@
-"""Score every submission in ./results/ against the ground truth and print a ranked scoreboard.
 
-Submissions are frame,label CSVs with one row per video frame, exactly as long as the ground
-truth, using the H/A/D/X alphabet. Anything in ./results/ ending in .csv is treated as an entry.
-
-Ranking is on spellF1 -- the mean possession-spell F1 over IoU 0.3..0.7 -- ties broken by macro-F1
-over {H, A, D}, then transition F1 at the loose tolerance, then mean absolute latency, then
-filename so the order is never arbitrary. See possession_metrics.py for why possessions are scored
-as intervals rather than frames, why macro-F1 and not accuracy, and for the noise floor on
-comparisons.
-
-A submission that fails validation is skipped and listed at the bottom with the reason, rather
-than aborting the run -- one malformed file must not hide everyone else's results. The exit code
-is 1 if anything was skipped. A broken *ground truth* is fatal, because it invalidates every
-score rather than one.
-
-The ground truth is chosen by name, not by path: --gt public is the 5-minute slice that ships
-with the repository and is the default, --gt private is the full match and only exists on an
-organiser's machine. A path still works if you have one somewhere else.
-
-Usage:
-    python run_evaluation.py                         # scored on the public 5 minutes
-    python run_evaluation.py --gt private            # organisers: the full match
-    python run_evaluation.py --bootstrap 1000        # confidence intervals; do this before
-                                                     # believing any gap on the 5-minute sample
-    python run_evaluation.py --results some/dir --gt some/other_gt.csv
-"""
 
 import argparse
 import glob
